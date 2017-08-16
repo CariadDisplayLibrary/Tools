@@ -1,0 +1,251 @@
+#!/usr/bin/php
+<?php
+
+$options = "jiw:d:c:o:n:T:B:L:R:x:t:";
+$opts = getopt($options);
+
+foreach( $opts as $o => $a ) {
+    while( $k = array_search( "-" . $o, $argv ) ) {
+        if( $k )
+            unset( $argv[$k] );
+        if( preg_match( "/^.*".$o.":.*$/i", $options ) )
+            unset( $argv[$k+1] );
+    }
+}
+$argv = array_merge( $argv );
+
+if (count($argv) < 2) {
+    print("Usage: png2font [options] filename\n");
+    print("  Options: -i             Invert image\n");
+    print("           -w cpl         Set number of characters per line\n");
+    print("           -c chars       Number of characters in the image\n");
+    print("           -d bpp         Bits per pixel of the font\n");
+    print("           -j             Vertical arrangement\n");
+    print("           -o offset      Starting character\n");
+    print("           -n name        Name of the font\n");
+    print("           -T pixels      Top margin of the image\n");
+    print("           -B pixels      Bottom margin of the image\n");
+    print("           -L pixels      Left margin of the image\n");
+    print("           -R pixels      Right margin of the image\n");
+    print("           -x x,y,w,h     Bounding box\n");
+    print("           -t x,y         Pixel location of a background colour\n");
+    exit(10);
+}
+$file = $argv[1];
+if (!file_exists($file)) {
+    print("Cannot find $file\n");
+    exit(10);
+}
+
+if (substr($file, -4, 4) != ".png") {
+    print("$file doesn't have the extension .png\n");
+    exit(10);
+}
+
+$bpp = 1;
+
+$hgutter = 0;
+$vgutter = 0;
+
+if (isset($opts['H'])) {
+    $hgutter = $opts['H'];
+}
+
+if (isset($opts['V'])) {
+    $vgutter = $opts['V'];
+}
+
+if (isset($opts['d'])) {
+    $bpp = $opts['d'];
+}
+
+$bgloc = false;
+if (isset($opts['t'])) {
+    $bgloc = $opts['t'];
+}
+
+$chars = 256;
+if (isset($opts['c'])) {
+    $chars = $opts['c'];
+}
+
+$offset = 0;
+if (isset($opts['o'])) {
+    $offset = $opts['o'];
+}
+
+$borderTop = 0;
+if (isset($opts['T'])) {
+    $borderTop = $opts['T'];
+}
+
+$borderBottomp = 0;
+if (isset($opts['B'])) {
+    $borderBottom = $opts['B'];
+}
+
+$borderLeft = 0;
+if (isset($opts['L'])) {
+    $borderLeft = $opts['L'];
+}
+
+$borderRight = 0;
+if (isset($opts['R'])) {
+    $borderRight = $opts['R'];
+}
+
+$prefix = substr($file, 0, -4);
+if (isset($opts['n'])) {
+    $prefix = $opts['n'];
+}
+
+$prefix = sanitize($prefix);
+
+$img = imageCreateFromPng($file);
+
+$imageWidth = ImageSX($img) - ($borderLeft + $borderRight);
+$imageHeight = ImageSY($img) - ($borderTop + $borderBottom);;
+
+$cpl = 16;
+if (isset($opts['w'])) {
+    $cpl = $opts['w']  + 0;
+}
+
+$lines = $chars / $cpl;
+
+$charWidth = floor($imageWidth / $cpl);
+$charHeight = floor($imageHeight / $lines);
+
+$bbx = 0;
+$bby = 0;
+$bbw = $charWidth;
+$bbh = $charHeight;
+
+if (isset($opts['x'])) {
+    $bits = explode(",", $opts['x']);
+    $bbx = $bits[0];
+    $bby = $bits[1];
+    $bbw = $bits[2];
+    $bbh = $bits[3];
+}
+
+$bpl = ceil($bbw / 8);
+
+print("Creating font $prefix...\n");
+
+$bpl *= $bpp;
+
+printf("Characters are %d x %d pixels\n", $bbw, $bbh);
+printf("Arranged as %d lines of %d characters\n", $lines, $cpl);
+printf("Characters consist of %d byte%c per line\n", $bpl, $bpl == 1 ? '' : 's');
+
+$bgr = 0;
+$bgg = 0;
+$bgb = 0;
+if ($bgloc != false) {
+    $bgl = explode(",", $bgloc);
+    $pix = imageColorAt($img, $bgl[0], $bgl[1]);
+    $rgb = imageColorsForIndex($img, $pix);
+    $bgr = $rgb['red'];
+    $bgg = $rgb['green'];
+    $bgb = $rgb['blue'];
+}
+
+
+$fontData = array();
+
+$shifts = 0;
+$sdata = 0;
+
+$lcn = -1;
+
+@mkdir($prefix);
+
+$cpp = fopen("$prefix/$prefix.cpp", "w");
+
+fprintf($cpp, "#include <$prefix.h>\n");
+fprintf($cpp, "\n");
+fprintf($cpp, "namespace Fonts {\n");
+fprintf($cpp, "\n");
+fprintf($cpp, "    const uint8_t " . $prefix . "[] = {\n");
+fprintf($cpp, "        0x%02X, 0x%02X, 0x%02X, 0x%02X, 0x%02X,\n", $bbh, $bpl, $offset, $offset+$chars-1, $bpp);
+
+for ($char = 0; $char < $chars; $char++) {
+    if (!isset($opts['j'])) { // Vertical arrangement?
+        $cx = (($char * $charWidth) % $imageWidth) + $borderLeft;
+        $cy = (floor(($char * $charWidth) / $imageWidth) * $charHeight) + $borderTop;
+    } else {
+        $cy = (($char * $charHeight) % $imageHeight) + $borderTop;
+        $cx = (floor(($char * $charHeight) / $imageHeight) * $charWidth) + $borderLeft;
+    }
+
+//    print "Char number $char. Top left is $cx, $cy\n";
+
+    fprintf($cpp, "        %d, ", $bbw);
+
+    for ($y = 0; $y < $bbh; $y++) {
+        $lineData = array();
+        for ($x = 0; $x < $bpl; $x++) {
+            $lineData[$x] = 0;
+        }
+        for ($x = 0; $x < $bbw; $x++) {
+
+            $byteno = $bpl - floor(($x * $bpp) / 8) - 1;
+            $bitno = ($x * $bpp) % 8;
+
+            $pix = imageColorAt($img, $cx + $x + $bbx, $cy + $y + $bby);
+            $rgb = imageColorsForIndex($img, $pix);
+
+            $brightness = ($rgb["red"] + $rgb["green"] + $rgb["blue"]) / 3;
+            $brightness *= 1-($rgb["alpha"] / 128);
+
+            if (isset($opts['i'])) {
+                $brightness = 255 - $brightness;
+            }
+
+            if ($bgloc != false) {
+                if ($bgr == $rgb['red'] && $bgg == $rgb['green'] && $bgb == $rgb['blue']) {
+                    $brightness = 0;
+                }
+            }
+            $brightness = $brightness >> (8 - $bpp);
+            $bval = $brightness << $bitno;
+            $lineData[$byteno] |= $bval;
+        }
+        foreach ($lineData as $d) {
+            fprintf($cpp, "0x%02x, ", $d);
+        }
+    }
+    fprintf($cpp, "\n");
+}
+
+fprintf($cpp, "    };\n");
+fprintf($cpp, "};\n");
+
+fclose($cpp);
+
+$cap = strtoupper($prefix);
+
+$h = fopen("$prefix/$prefix.h", "w");
+fprintf($h, "#ifndef _" . $cap . "_H\n");
+fprintf($h, "#define _" . $cap . "_H\n");
+fprintf($h, "\n");
+fprintf($h, "#include <DisplayCore.h>\n");
+fprintf($h, "\n");
+fprintf($h, "namespace Fonts {\n");
+fprintf($h, "    extern const uint8_t " . $prefix . "[];\n");
+fprintf($h, "};\n");
+fprintf($h, "\n");
+fprintf($h, "#endif\n");
+fclose($h);
+
+function sanitize($s) {
+    $s = str_replace("_", " ", $s);
+    $s = str_replace("~", " ", $s);
+    $s = str_replace("-", " ", $s);
+    $s = str_replace(".", " ", $s);
+    $s = ucwords($s);
+    $s = str_replace(" ", "", $s);
+    return $s;
+}
+

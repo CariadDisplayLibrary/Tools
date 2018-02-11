@@ -21,7 +21,9 @@ public class TrueTypeRender extends JDialog {
     JTextArea fontNameBox;
     Font loadedFont;
     File ttfFile;
-    JSpinner fontSizeBox;
+    JSpinner fontSizeMinBox;
+    JSpinner fontSizeMaxBox;
+    JSpinner fontSizePreviewBox;
     JSpinner fontDepthBox;
     JSpinner firstGlyph;
     JSpinner lastGlyph;
@@ -157,7 +159,6 @@ public class TrueTypeRender extends JDialog {
                     "TrueType Font Files", "ttf");
                 fc.setFileFilter(filter);
                 int rv = fc.showOpenDialog(TrueTypeRender.this);
-System.err.println("FOO");
                 if (rv == JFileChooser.APPROVE_OPTION) {
                     ttfFile = fc.getSelectedFile();
                     lastOpenLocation = ttfFile.getParentFile();
@@ -172,29 +173,56 @@ System.err.println("FOO");
         c.gridx = 0;
         c.weightx = 0D;
         c.gridwidth = 1;
-        centerBox.add(new JLabel("Font Size: "), c);
+        centerBox.add(new JLabel("Font Size Min: "), c);
         c.gridx = 1;
         c.gridwidth = 3;
         c.weightx = 1D;
 
-        fontSizeBox = new JSpinner();
-        fontSizeBox.setValue(20);
-        centerBox.add(fontSizeBox, c);
+        fontSizeMinBox = new JSpinner();
+        fontSizeMinBox.setValue(10);
+        centerBox.add(fontSizeMinBox, c);
 
-        fontSizeBox.addChangeListener(new ChangeListener() {
+        fontSizeMinBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
-                int fs = (Integer)fontSizeBox.getValue();
+                int fs = (Integer)fontSizeMinBox.getValue();
                 if (fs < 6) {
-                    fontSizeBox.setValue(6);
+                    fontSizeMinBox.setValue(6);
                     fs = 6;
                 }
                 if (fs > 127) {
-                    fontSizeBox.setValue(127);
+                    fontSizeMinBox.setValue(127);
                     fs = 127;
                 }
                 renderFontSample();
-                infoBox.setText("Estimated " + calculateSize() + " bytes");
-                fontNameBox.setText(loadedFont.getFontName().replace(" ", "") + fs);
+            }
+        });
+
+        c.gridy++;
+
+        c.gridx = 0;
+        c.weightx = 0D;
+        c.gridwidth = 1;
+        centerBox.add(new JLabel("Font Size Max: "), c);
+        c.gridx = 1;
+        c.gridwidth = 3;
+        c.weightx = 1D;
+
+        fontSizeMaxBox = new JSpinner();
+        fontSizeMaxBox.setValue(10);
+        centerBox.add(fontSizeMaxBox, c);
+
+        fontSizeMaxBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                int fs = (Integer)fontSizeMaxBox.getValue();
+                if (fs < 6) {
+                    fontSizeMaxBox.setValue(6);
+                    fs = 6;
+                }
+                if (fs > 127) {
+                    fontSizeMaxBox.setValue(127);
+                    fs = 127;
+                }
+                renderFontSample();
             }
         });
 
@@ -211,13 +239,12 @@ System.err.println("FOO");
         Integer[] validColors = { 2, 4, 16 };
         SpinnerListModel depthModel = new SpinnerListModel(Arrays.asList(validColors));
         fontDepthBox = new JSpinner(depthModel);
-        fontDepthBox.setValue(2);
+        fontDepthBox.setValue(16);
         centerBox.add(fontDepthBox, c);
 
         fontDepthBox.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent e) {
                 renderFontSample();
-                infoBox.setText("Estimated " + calculateSize() + " bytes");
             }
         });
 
@@ -250,7 +277,6 @@ System.err.println("FOO");
                     firstGlyph.setValue(glyphList[lv]);
                     fv = lv;
                 }
-                infoBox.setText("Estimated " + calculateSize() + " bytes");
             }
         });
 
@@ -283,7 +309,6 @@ System.err.println("FOO");
                     lastGlyph.setValue(glyphList[fv]);
                     lv = fv;
                 }
-                infoBox.setText("Estimated " + calculateSize() + " bytes");
             }
         });
 
@@ -295,6 +320,35 @@ System.err.println("FOO");
         c.gridwidth = 4;
         centerBox.add(previewImage, c);
         
+        c.gridy++;
+
+        c.gridx = 0;
+        c.weightx = 0D;
+        c.gridwidth = 1;
+        centerBox.add(new JLabel("Preview Size: "), c);
+        c.gridx = 1;
+        c.gridwidth = 3;
+        c.weightx = 1D;
+
+        fontSizePreviewBox = new JSpinner();
+        fontSizePreviewBox.setValue(10);
+        centerBox.add(fontSizePreviewBox, c);
+
+        fontSizePreviewBox.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                int fs = (Integer)fontSizePreviewBox.getValue();
+                if (fs < 6) {
+                    fontSizePreviewBox.setValue(6);
+                    fs = 6;
+                }
+                if (fs > 127) {
+                    fontSizePreviewBox.setValue(127);
+                    fs = 127;
+                }
+                renderFontSample();
+            }
+        });
+
 
         add(centerBox, BorderLayout.CENTER);
 
@@ -324,19 +378,19 @@ System.err.println("FOO");
             return;
         }
 
-        fontNameBox.setText(loadedFont.getFontName().replace(" ", "") + "20");
+        fontNameBox.setText(loadedFont.getFontName().replace(" ", ""));
 
-        fontSizeBox.setValue(20);
-        fontDepthBox.setValue(2);
+        fontSizeMinBox.setValue(10);
+        fontSizeMaxBox.setValue(30);
+        fontDepthBox.setValue(16);
 
         renderFontSample();
-        infoBox.setText("Estimated " + calculateSize() + " bytes");
 
     }
 
     public void renderFontSample() {
 
-        int size = (Integer)fontSizeBox.getValue();
+        int size = (Integer)fontSizePreviewBox.getValue();
         int depth = (Integer)fontDepthBox.getValue();
         Float fSize = (float)size;
         Font resizedFont = loadedFont.deriveFont(fSize);
@@ -402,14 +456,13 @@ System.err.println("FOO");
         
     }
 
-    Dimension calculateBoundingSize() {
+    Dimension calculateBoundingSize(int fontSize) {
         BufferedImage workArea = new BufferedImage(500, 500, BufferedImage.TYPE_BYTE_GRAY);
 
-        int size = (Integer)fontSizeBox.getValue();
         int depth = (Integer)fontDepthBox.getValue();
         int first = ((Glyph)firstGlyph.getValue()).getValue();
         int last = ((Glyph)lastGlyph.getValue()).getValue();
-        Float fSize = (float)size;
+        Float fSize = (float)fontSize;
 
         Font resizedFont = loadedFont.deriveFont(fSize);
 
@@ -436,82 +489,72 @@ System.err.println("FOO");
     }
 
     void renderFont() {
-        Dimension rect = calculateBoundingSize();
-        int size = (Integer)fontSizeBox.getValue();
-        Float fSize = (float)size;
-        int depth = (Integer)fontDepthBox.getValue();
-        int first = ((Glyph)firstGlyph.getValue()).getValue();
-        int last = ((Glyph)lastGlyph.getValue()).getValue();
-        int bitDepth = 0;
-        if (depth == 2) { 
-            bitDepth = 1;
-        } else if (depth == 4) {
-            bitDepth = 2;
-        } else if (depth == 16) {
-            bitDepth = 4;
-        }
-        BufferedImage workArea = new BufferedImage((int)rect.getWidth(), (int)rect.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        Font resizedFont = loadedFont.deriveFont(fSize);
-        Graphics2D graphic = workArea.createGraphics();
-        graphic.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        FontRenderContext frc = graphic.getFontRenderContext();
-
-        int bpl = (int)Math.ceil(rect.getWidth() / 8) * bitDepth;
-
-        ArrayList<DCChar> allChars = new ArrayList<DCChar>();
 
 
-        for (int glyph = first; glyph <= last; glyph++) {
-            graphic.setColor(Color.BLACK);
-            graphic.fillRect(0, 0, (int)rect.getWidth(), (int)rect.getHeight());
-            graphic.setColor(Color.WHITE);
-            graphic.setFont(resizedFont);
-            char thisChar = (char)glyph;
-            String thisString = Character.toString(thisChar);
-            Rectangle2D bounds = resizedFont.getStringBounds(thisString, frc);
-            int verticalOffset = (int)Math.ceil(0 - bounds.getY());
-            int horizontalOffset = (int)Math.ceil(0 - bounds.getX());
-            graphic.drawString(thisString, horizontalOffset,  verticalOffset);
-            ArrayList<BigInteger> characterData = new ArrayList<BigInteger>();
-            for (int line = 0; line < rect.getHeight(); line++) {
-                BigInteger lineData = BigInteger.ZERO;
+        int minSize = (Integer)fontSizeMinBox.getValue();
+        int maxSize = (Integer)fontSizeMaxBox.getValue();
 
-                for (int pixel = 0; pixel < rect.getWidth(); pixel++) {
-                    int rgb = workArea.getRGB(pixel, line) & 0xFF;
-                    int col = (rgb / (256/depth));
-                    BigInteger thisPixel = BigInteger.valueOf(col);
-                    thisPixel = thisPixel.shiftLeft(pixel * bitDepth);
-                    lineData = lineData.or(thisPixel);
-                }
-                characterData.add(lineData);
+        for (int size = minSize; size <= maxSize; size++) {
+
+            Dimension rect = calculateBoundingSize(size);
+            Float fSize = (float)size;
+            int depth = (Integer)fontDepthBox.getValue();
+            int first = ((Glyph)firstGlyph.getValue()).getValue();
+            int last = ((Glyph)lastGlyph.getValue()).getValue();
+            int bitDepth = 0;
+            if (depth == 2) { 
+                bitDepth = 1;
+            } else if (depth == 4) {
+                bitDepth = 2;
+            } else if (depth == 16) {
+                bitDepth = 4;
             }
-            DCChar newChar = new DCChar(glyph, (int)bounds.getWidth(), (int)rect.getHeight(), bitDepth, bpl, characterData);
-            allChars.add(newChar);
-        }   
-        DCFont newFont = new DCFont((int)rect.getHeight(), bpl, first, last, bitDepth, fontNameBox.getText(), allChars);
-        MainWindow mw = (MainWindow)parent;
-        mw.setFont(newFont);
-        this.dispose();
+            BufferedImage workArea = new BufferedImage((int)rect.getWidth(), (int)rect.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+            Font resizedFont = loadedFont.deriveFont(fSize);
+            Graphics2D graphic = workArea.createGraphics();
+            graphic.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            FontRenderContext frc = graphic.getFontRenderContext();
+
+            int bpl = (int)Math.ceil(rect.getWidth() / 8) * bitDepth;
+
+            ArrayList<DCChar> allChars = new ArrayList<DCChar>();
+
+
+            for (int glyph = first; glyph <= last; glyph++) {
+                graphic.setColor(Color.BLACK);
+                graphic.fillRect(0, 0, (int)rect.getWidth(), (int)rect.getHeight());
+                graphic.setColor(Color.WHITE);
+                graphic.setFont(resizedFont);
+                char thisChar = (char)glyph;
+                String thisString = Character.toString(thisChar);
+                Rectangle2D bounds = resizedFont.getStringBounds(thisString, frc);
+                int verticalOffset = (int)Math.ceil(0 - bounds.getY());
+                int horizontalOffset = (int)Math.ceil(0 - bounds.getX());
+                graphic.drawString(thisString, horizontalOffset,  verticalOffset);
+                ArrayList<BigInteger> characterData = new ArrayList<BigInteger>();
+                for (int line = 0; line < rect.getHeight(); line++) {
+                    BigInteger lineData = BigInteger.ZERO;
+
+                    for (int pixel = 0; pixel < rect.getWidth(); pixel++) {
+                        int rgb = workArea.getRGB(pixel, line) & 0xFF;
+                        int col = (rgb / (256/depth));
+                        BigInteger thisPixel = BigInteger.valueOf(col);
+                        thisPixel = thisPixel.shiftLeft(pixel * bitDepth);
+                        lineData = lineData.or(thisPixel);
+                    }
+                    characterData.add(lineData);
+                }
+                DCChar newChar = new DCChar(glyph, (int)bounds.getWidth(), (int)rect.getHeight(), bitDepth, bpl, characterData);
+                allChars.add(newChar);
+            }   
+            DCFont newFont = new DCFont((int)rect.getHeight(), bpl, first, last, bitDepth, fontNameBox.getText() + size, allChars);
+            File d = new File(fontNameBox.getText());
+            if (!d.exists()) {
+                d.mkdirs();
+            }
+            File f = new File(d, fontNameBox.getText() + size + ".cpp");
+            newFont.saveFont(f);
+        }
     }
 
-    int calculateSize() {
-        Dimension rect = calculateBoundingSize();
-        int depth = (Integer)fontDepthBox.getValue();
-        int first = ((Glyph)firstGlyph.getValue()).getValue();
-        int last = ((Glyph)lastGlyph.getValue()).getValue();
-        if (depth == 2) { 
-            depth = 1;
-        } else if (depth == 4) {
-            depth = 2;
-        } else if (depth == 16) {
-            depth = 4;
-        }
-        int bpl = (int)Math.ceil(rect.getWidth() / 8) * depth;
-        System.err.println("Character size: " + rect);
-        System.err.println("Bytes per line: " + bpl);
-        System.err.println("Lines per character: " + rect.getHeight());
-        System.err.println("Bytes per character: " + (bpl * rect.getHeight()));
-        System.err.println("Total Bytes: " + ((bpl * rect.getHeight()) * (last - first + 1)));
-        return (int)((bpl * rect.getHeight()) * (last - first + 1));
-    }
 }

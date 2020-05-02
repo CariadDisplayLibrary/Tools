@@ -1,4 +1,4 @@
-package org.displaycore;
+package org.cariad;
 
 import java.io.*;
 import java.util.*;
@@ -228,7 +228,7 @@ class DCFont {
             pw.println("#ifndef _" + baseName().toUpperCase() + "_H");
             pw.println("#define _" + baseName().toUpperCase() + "_H");
             pw.println("");
-            pw.println("#include <DisplayCore.h>");
+            pw.println("#include <Cariad.h>");
             pw.println("");
             pw.println("namespace Fonts {");
             for (String s : fontEntries) {

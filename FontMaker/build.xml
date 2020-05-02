@@ -35,7 +35,7 @@
                 <attribute name="Version" value="1.0.0" />
                 <attribute name="Compiled" value="${TODAY}" />
                 <attribute name="Author" value="Majenko Technologies" />
-                <attribute name="Main-Class" value="org.displaycore.FontMaker" />
+                <attribute name="Main-Class" value="org.cariad.FontMaker" />
             </manifest>
         </jar>
         <chmod perm="0755" file="FontMaker.jar" />

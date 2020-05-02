@@ -1,4 +1,4 @@
-package org.displaycore;
+package org.cariad;
 
 import javax.swing.*;
 import javax.swing.filechooser.*;
@@ -47,7 +47,7 @@ class MainWindow extends JFrame {
     public void open() {
         setResizable(true);
         setLayout(new BorderLayout());
-        setTitle("FontMaker for DisplayCore :: No Font");
+        setTitle("FontMaker for Cariad :: No Font");
 
         menuBar = new JMenuBar();
         fileMenu = new JMenu("File");
@@ -593,7 +593,7 @@ class MainWindow extends JFrame {
         characterPanel.removeAll();
         revalidate();
         loadedFont = f;
-        setTitle("FontMaker for DisplayCore :: " + loadedFont.getName());
+        setTitle("FontMaker for Cariad :: " + loadedFont.getName());
         updateFontInfo();
         refreshScreen();
     }
@@ -606,7 +606,7 @@ class MainWindow extends JFrame {
         revalidate();
         loadedFont = new DCFont(f);
         addToMRU(f);
-        setTitle("FontMaker for DisplayCore :: " + loadedFont.getName());
+        setTitle("FontMaker for Cariad :: " + loadedFont.getName());
         updateFontInfo();
         refreshScreen();
     }

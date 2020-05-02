@@ -1,4 +1,4 @@
-package org.displaycore;
+package org.cariad;
 
 import javax.swing.*;
 import javax.swing.border.*;

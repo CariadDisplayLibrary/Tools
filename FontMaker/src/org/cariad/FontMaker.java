@@ -1,4 +1,4 @@
-package org.displaycore;
+package org.cariad;
 
 import javax.swing.UIManager;
 import java.util.prefs.*;

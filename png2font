@@ -230,7 +230,7 @@ $h = fopen("$prefix/$prefix.h", "w");
 fprintf($h, "#ifndef _" . $cap . "_H\n");
 fprintf($h, "#define _" . $cap . "_H\n");
 fprintf($h, "\n");
-fprintf($h, "#include <DisplayCore.h>\n");
+fprintf($h, "#include <Cariad.h>\n");
 fprintf($h, "\n");
 fprintf($h, "namespace Fonts {\n");
 fprintf($h, "    extern const uint8_t " . $prefix . "[];\n");

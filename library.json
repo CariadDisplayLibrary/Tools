@@ -1,1 +1,26 @@
-{"name":"Tools","keywords":"display, cariad, tft, lcd, glcd, oled, graphics, font","description":"Tools for Cariad","homepage":"http:\/\/cariad.org\/wiki\/index.php?title=Acorn","repository":{"type":"git","url":"https:\/\/github.com\/Cariad\/Tools.git"},"dependencies":[{"name":"Cariad","version":"2.1.0"}],"export":{"exclude":"debian"},"authors":{"name":"Majenko Technologies","url":"http:\/\/majenko.co.uk"},"version":"","frameworks":"arduino","platforms":"microchippic32"}
+{
+    "name": "Tools",
+    "keywords": "display, cariad, tft, lcd, glcd, oled, graphics, font",
+    "description": "Tools for Cariad",
+    "homepage": "https:\/\/github.com\/CariadDisplayLibrary\/Tools",
+    "repository": {
+        "type": "git",
+        "url": "https:\/\/github.com\/CariadDisplayLibrary\/Tools"
+    },
+    "dependencies": [
+        {
+            "name": "Cariad",
+            "version": "2.1.0"
+        }
+    ],
+    "export": {
+        "exclude": "debian"
+    },
+    "authors": {
+        "name": "Majenko Technologies",
+        "url": "http:\/\/majenko.co.uk"
+    },
+    "version": "",
+    "frameworks": "arduino",
+    "platforms": "microchippic32"
+}
